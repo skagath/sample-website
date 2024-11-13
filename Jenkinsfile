@@ -18,13 +18,8 @@ pipeline {
         }
 
        stage("Docker Build Image"){
-           steps{
-             steps{
-                 
-                
-                docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
-                
-             }
+           steps {    
+               docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
            }
       }
 
