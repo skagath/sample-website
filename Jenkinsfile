@@ -35,13 +35,12 @@ pipeline {
        stage("Upload App Image"){
          steps{
             script{
-                docker.withRegistry(capstoneRegistry, registryCredential){
-                    dockerImage.push("$BUILD_NUMBER")
-                    dockerImage.push('latest')
+                    docker.withRegistry(438465160558.dkr.ecr.us-east-1.amazonaws.com, aws_secret){
+                    docker.image("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}").push()
                 }
             }
          }
-      }
+      }                                                                
 
       stage('Deploy to ecs'){
          when {
