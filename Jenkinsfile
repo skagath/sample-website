@@ -49,7 +49,7 @@ pipeline {
       stage('Deploy to ecs'){
         
          steps{
-            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+            withCredentials([aws(credentialsId: 'aws_secret', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                 script {
                         // Update the ECS task definition
                         sh """
