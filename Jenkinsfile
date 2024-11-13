@@ -35,9 +35,9 @@ pipeline {
        stage("Upload App Image"){
          steps{
             script{
-                    docker.withRegistry(438465160558.dkr.ecr.us-east-1.amazonaws.com, aws_secret){
-                    docker.image("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}").push()
-                }
+                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                    sh "docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                    sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
             }
          }
       }                                                                
