@@ -59,11 +59,11 @@ pipeline {
                             aws ecs register-task-definition \
                                 --family ${ECS_TASK_DEFINITION} \
                                 --container-definitions '[{
-                                    "name": "your-container-name",
+                                    "name": "sample-app",
                                     "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
                                     "essential": true,
-                                    "memory": 512,
-                                    "cpu": 256
+                                    "memory": 205,
+                                    "cpu": 0
                                 }]'
                             """,
                             returnStdout: true
