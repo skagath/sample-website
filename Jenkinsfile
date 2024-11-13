@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Clone Website') {
             steps {
-                git url:'https://github.com/skagath/sample-website.git'
+                git credentialsId: 'github_creds', url: 'https://github.com/skagath/sample-website.git'
             }
         }
 
