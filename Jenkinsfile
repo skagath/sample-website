@@ -8,6 +8,7 @@ pipeline {
        CLUSTER = "sampleapp"
        REGION = "us-east-1"
        SERVICE  = "svc-sample-app"
+       ECS_TASK_DEFINITION = "tf-sampleapp"
    }
 
     stages {
@@ -48,9 +49,31 @@ pipeline {
       stage('Deploy to ecs'){
         
          steps{
-            withAWS(credentials: 'aws_secret', region: 'us-east-1'){
-                sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
-            }
+            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                script {
+                        // Update the ECS task definition
+                        sh """
+                        aws ecs register-task-definition \
+                          --family ${ECS_TASK_DEFINITION} \
+                          --container-definitions '[{
+                              "name": "sample-app",
+                              "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
+                              "essential": true,
+                              "memory": 512,
+                              "cpu": 256
+                          }]'
+                        """
+                        
+                        // Update the ECS service to use the new task definition
+                        sh """
+                        aws ecs update-service \
+                          --cluster ${ECS_CLUSTER} \
+                          --service ${ECS_SERVICE} \
+                          --force-new-deployment \
+                          --region ${REGION}
+                        """
+                }
+             }
          }
       }
 
