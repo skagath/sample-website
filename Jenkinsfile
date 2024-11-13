@@ -67,8 +67,8 @@ pipeline {
                         // Update the ECS service to use the new task definition
                         sh """
                         aws ecs update-service \
-                          --cluster ${ECS_CLUSTER} \
-                          --service ${ECS_SERVICE} \
+                          --cluster ${CLUSTER} \
+                          --service ${SERVICE} \
                           --force-new-deployment \
                           --region ${REGION}
                         """
