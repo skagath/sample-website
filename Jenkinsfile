@@ -46,9 +46,7 @@ pipeline {
       }                                                                
 
       stage('Deploy to ecs'){
-         when {
-                branch "master"
-         }
+        
          steps{
             withAWS(credentials: 'aws_secret', region: 'us-east-1'){
                 sh 'aws ecs update-service --cluster ${cluster} --service ${service} --force-new-deployment'
