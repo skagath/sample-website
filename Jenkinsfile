@@ -19,10 +19,10 @@ pipeline {
         }
 
         stage("Docker Build Image") {
-            steps {    
+            steps {
                 script {
                     sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
-                }   
+                }
             }
         }
 
@@ -69,9 +69,12 @@ pipeline {
                             returnStdout: true
                         ).trim()
 
-                        // Extract the new task definition ARN
+                        // Debug: Print the full response (optional)
+                        echo "Task Definition Response: ${taskDefinitionResponse}"
+
+                        // Extract the new task definition ARN using jq
                         def taskDefinitionArn = sh(
-                            script: "echo ${taskDefinitionResponse} | jq -r '.taskDefinition.taskDefinitionArn'",
+                            script: "echo '${taskDefinitionResponse}' | jq -r '.taskDefinition.taskDefinitionArn'",
                             returnStdout: true
                         ).trim()
 
