@@ -59,6 +59,7 @@ pipeline {
                               "name": "sample-app",
                               "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
                               "essential": true,
+                              "memory": 205,
                               "cpu": 0
                           }]'
                         """
