@@ -51,28 +51,38 @@ pipeline {
          steps{
             withCredentials([aws(credentialsId: 'aws_secret', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                 script {
-                        // Update the ECS task definition
-                        sh """
-                        aws ecs register-task-definition \
-                          --family ${ECS_TASK_DEFINITION} \
-                          --container-definitions '[{
-                              "name": "sample-app",
-                              "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
-                              "essential": true,
-                              "memory": 205,
-                              "cpu": 0
-                          }]'
-                        """
-                        
-                        // Update the ECS service to use the new task definition
+                        // Register a new ECS task definition revision with the updated image
+                        def taskDefinitionResponse = sh(
+                            script: """
+                            aws ecs register-task-definition \
+                              --family ${ECS_TASK_DEFINITION} \
+                              --container-definitions '[{
+                                  "name": "your-container-name",
+                                  "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
+                                  "essential": true,
+                                  "memory": 205,
+                                  "cpu": 0
+                              }]'
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        // Extract the new task definition revision
+                        def taskDefinitionArn = sh(
+                            script: "echo ${taskDefinitionResponse} | jq -r '.taskDefinition.taskDefinitionArn'",
+                            returnStdout: true
+                        ).trim()
+
+                        // Update ECS service to use the new task definition revision
                         sh """
                         aws ecs update-service \
                           --cluster ${CLUSTER} \
                           --service ${SERVICE} \
+                          --task-definition ${taskDefinitionArn} \
                           --force-new-deployment \
                           --region ${REGION}
                         """
-                }
+                    }
              }
          }
       }
