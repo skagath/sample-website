@@ -57,14 +57,8 @@ pipeline {
                         def taskDefinitionResponse = sh(
                             script: """
                             aws ecs register-task-definition \
-                                --family ${ECS_TASK_DEFINITION} \
-                                --container-definitions '[{
-                                    "name": "sample-app",
-                                    "image": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
-                                    "essential": true,
-                                    "memory": 205,
-                                    "cpu": 0
-                                }]'
+                                --cli-input-json file://task-definition.json \
+                                --region ${REGION}
                             """,
                             returnStdout: true
                         ).trim()
