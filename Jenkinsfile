@@ -5,9 +5,9 @@ pipeline {
        ECR_REPO = "sample-app"
        ECR_REGISTRY = "438465160558.dkr.ecr.us-east-1.amazonaws.com"
        IMAGE_TAG ="latest"
-       cluster = "sampleapp"
-       region= "us-east-1"
-       service = "svc-sample-app"
+       CLUSTER = "sampleapp"
+       REGION = "us-east-1"
+       SERVICE  = "svc-sample-app"
    }
 
     stages {
@@ -19,8 +19,9 @@ pipeline {
 
        stage("Docker Build Image"){
            steps{
-             script{
-              
+             steps{
+                 
+                
                 docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
                 
              }
