@@ -20,7 +20,7 @@ pipeline {
        stage("Docker Build Image"){
            steps {    
                 script {
-                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
+                    sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
                 }   
           }
       }
