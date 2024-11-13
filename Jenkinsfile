@@ -19,8 +19,10 @@ pipeline {
 
        stage("Docker Build Image"){
            steps {    
-               docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
-           }
+                script {
+                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",".")
+                }   
+          }
       }
 
        stage('Test Website') {
