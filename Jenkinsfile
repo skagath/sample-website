@@ -36,15 +36,20 @@ pipeline {
         stage("Upload App Image") {
             steps {
                 script {
-                    withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        // Authenticate Docker to AWS ECR
-                        sh "aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-                        
-                        // Tag the Docker image
-                        sh "docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        
-                        // Push the Docker image to ECR
-                        sh "docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                    try {
+                        withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            // Authenticate Docker to AWS ECR
+                            sh "aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                            
+                            // Tag the Docker image
+                            sh "docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                            
+                            // Push the Docker image to ECR
+                            sh "docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                        }
+                    } catch (Exception e) {
+                        sendFailureLogToSlack("Upload App Image")
+                        throw e // Re-throw the exception to mark the build as failed
                     }
                 }
             }
@@ -52,41 +57,47 @@ pipeline {
 
         stage('Deploy to ECS') {
             steps {
-                withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    script {
-                        // Register a new ECS task definition revision with the updated image
-                        def taskDefinitionResponse = sh(
-                            script: """
-                            aws ecs register-task-definition \
-                                --cli-input-json file://task-definition.json \
+                script {
+                    try {
+                        withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                            // Register a new ECS task definition revision with the updated image
+                            def taskDefinitionResponse = sh(
+                                script: """
+                                aws ecs register-task-definition \
+                                    --cli-input-json file://task-definition.json \
+                                    --region ${REGION}
+                                """,
+                                returnStdout: true
+                            ).trim()
+
+                            // Debug: Print the full response (optional)
+                            echo "Task Definition Response: ${taskDefinitionResponse}"
+
+                            // Extract the new task definition ARN using jq
+                            def taskDefinitionArn = sh(
+                                script: "echo '${taskDefinitionResponse}' | jq -r '.taskDefinition.taskDefinitionArn'",
+                                returnStdout: true
+                            ).trim()
+
+                            // Update ECS service to use the new task definition revision
+                            sh """
+                            aws ecs update-service \
+                                --cluster ${CLUSTER} \
+                                --service ${SERVICE} \
+                                --task-definition ${taskDefinitionArn} \
+                                --force-new-deployment \
                                 --region ${REGION}
-                            """,
-                            returnStdout: true
-                        ).trim()
-
-                        // Debug: Print the full response (optional)
-                        echo "Task Definition Response: ${taskDefinitionResponse}"
-
-                        // Extract the new task definition ARN using jq
-                        def taskDefinitionArn = sh(
-                            script: "echo '${taskDefinitionResponse}' | jq -r '.taskDefinition.taskDefinitionArn'",
-                            returnStdout: true
-                        ).trim()
-
-                        // Update ECS service to use the new task definition revision
-                        sh """
-                        aws ecs update-service \
-                            --cluster ${CLUSTER} \
-                            --service ${SERVICE} \
-                            --task-definition ${taskDefinitionArn} \
-                            --force-new-deployment \
-                            --region ${REGION}
-                        """
+                            """
+                        }
+                    } catch (Exception e) {
+                        sendFailureLogToSlack("Deploy to ECS")
+                        throw e // Re-throw the exception to mark the build as failed
                     }
                 }
             }
         }
     }
+
     post {
         always {
             echo "Pipeline completed."
@@ -101,18 +112,27 @@ pipeline {
         }
         failure {
             script {
-                // Fetch up to 1000 lines from the console log and extract the last 50 lines
-                def fullLog = currentBuild.rawBuild.getLog(1000)
-                def logLines = fullLog.takeRight(50).join('\n')
-                
-                // Send a detailed Slack notification
-                slackSend channel: "${SLACK_CHANNEL_NAME}",
-                          color: 'danger',
-                          message: """❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed!
-                                      Check logs: ${env.JENKINS_URL}console
-                                      \n*Last 50 Log Lines:*\n```$logLines```""",
-                          tokenCredentialId: 'slack-tocken'
+                sendFailureLogToSlack("Pipeline")
             }
         }
+    }
+}
+
+// Helper function to send logs to Slack
+def sendFailureLogToSlack(stageName) {
+    try {
+        // Fetch up to 1000 lines from the console log and extract the last 50 lines
+        def fullLog = currentBuild.rawBuild.getLog(1000)
+        def logLines = fullLog.takeRight(50).join('\n')
+
+        // Send the Slack notification
+        slackSend channel: "${env.SLACK_CHANNEL_NAME}",
+                  color: 'danger',
+                  message: """❌ Stage *${stageName}* failed in pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER}!
+                              Check logs: ${env.JENKINS_URL}console
+                              \n*Last 50 Log Lines:*\n```$logLines```""",
+                  tokenCredentialId: 'slack-tocken'
+    } catch (Exception ex) {
+        echo "Error while sending failure logs to Slack: ${ex.message}"
     }
 }
