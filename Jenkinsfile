@@ -76,7 +76,7 @@ pipeline {
                         // Update ECS service to use the new task definition revision
                         sh """
                         aws ecs update-service \
-                            --cluster ${CLUSTER} \
+                            --cluster ${CLUSTER} 
                             --service ${SERVICE} \
                             --task-definition ${taskDefinitionArn} \
                             --force-new-deployment \
