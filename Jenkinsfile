@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage("Docker Build Image") {
+        stage('Docker Build Image') {
             steps {
                 script {
                     sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
@@ -33,13 +33,15 @@ pipeline {
             }
         }
 
-        stage("Upload App Image") {
+        stage('Upload App Image') {
             steps {
                 script {
                     withCredentials([aws(credentialsId: 'aws_secret', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        sh "aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-                        sh "docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                        sh "docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
+                        sh """
+                        aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                        docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                        """
                     }
                 }
             }
@@ -64,6 +66,8 @@ pipeline {
                             script: "echo '${taskDefinitionResponse}' | jq -r '.taskDefinition.taskDefinitionArn'",
                             returnStdout: true
                         ).trim()
+
+                        echo "Using Task Definition ARN: ${taskDefinitionArn}"
 
                         sh """
                         aws ecs update-service \
@@ -96,13 +100,9 @@ pipeline {
         failure {
             script {
                 try {
-                    // Fetch last 50 lines of logs
                     def last50Logs = currentBuild.rawBuild.getLog(50).join('\n')
-
-                    // Print last 50 lines in Jenkins console for verification
                     echo "Last 50 Lines of Logs:\n${last50Logs}"
 
-                    // Slack message length limitation (4000 characters)
                     def maxSlackMessageLength = 3900
                     if (last50Logs.length() > maxSlackMessageLength) {
                         last50Logs = last50Logs.take(maxSlackMessageLength) + "\n... (truncated)"
