@@ -87,7 +87,6 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             echo "Pipeline completed."
@@ -105,8 +104,8 @@ pipeline {
                 // Fetch all logs
                 def allLogs = currentBuild.rawBuild.getLog()
 
-                // Filter logs for lines that contain 'error' (you can modify this pattern)
-                def errorLogs = allLogs.findAll { it =~ /error/i }
+                // Filter logs for lines that contain 'error' (case-insensitive)
+                def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
 
                 // If error logs were found, join them into a message
                 def errorMessage = errorLogs.join("\n")
