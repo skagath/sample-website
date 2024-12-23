@@ -95,10 +95,10 @@ pipeline {
             script {
                 try {
                     // Attempt to fetch full build logs
-                    def allLogs = currentBuild.rawBuild.getLog(5000)  // Increase log size limit
+                    def allLogs = currentBuild.rawBuild.getLog(100)  // Increase log size limit
 
                     // Debug - Print the first 20 lines in Jenkins Console
-                    echo "First 20 lines of logs:\n" + allLogs.take(20).join('\n')
+                    echo "First 20 lines of logs:\n" + allLogs.take(100).join('\n')
 
                     // Filter errors with a robust regex
                     def errorLogs = allLogs.findAll { it =~ /(?i)(error|fail|exception|fatal)/ }
