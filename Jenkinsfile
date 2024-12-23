@@ -96,39 +96,22 @@ pipeline {
         failure {
             script {
                 try {
-                    // Fetch last 5000 lines of logs
-                    def allLogs = currentBuild.rawBuild.getLog(100)
+                    // Fetch last 50 lines of logs
+                    def last50Logs = currentBuild.rawBuild.getLog(50).join('\n')
 
-                    // Print the first 20 lines in Jenkins console for debugging
-                    echo "First 20 lines of logs:\n" + allLogs.take(100).join('\n')
+                    // Print last 50 lines in Jenkins console for verification
+                    echo "Last 50 Lines of Logs:\n${last50Logs}"
 
-                    // Filter all lines containing 'error' (case-insensitive)
-                    def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
-
-                    if (errorLogs && errorLogs.size() > 0) {
-                        def errorMessage = errorLogs.join("\n")
-
-                        // Print filtered error logs in Jenkins console for verification
-                        echo "Filtered Error Logs:\n${errorMessage}"
-
-                        // Slack allows ~4000 characters per message
-                        def maxSlackMessageLength = 3900
-                        if (errorMessage.length() > maxSlackMessageLength) {
-                            errorMessage = errorMessage.take(maxSlackMessageLength) + "\n... (truncated)"
-                        }
-
-                        slackSend channel: "${SLACK_CHANNEL_NAME}",
-                                  color: 'danger',
-                                  message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}\nError Logs:\n${errorMessage}",
-                                  tokenCredentialId: 'slack-tocken'
-                    } else {
-                        echo "No error logs found in the captured logs."
-
-                        slackSend channel: "${SLACK_CHANNEL_NAME}",
-                                  color: 'danger',
-                                  message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! No error logs found. Check logs: ${env.JENKINS_URL}",
-                                  tokenCredentialId: 'slack-tocken'
+                    // Slack message length limitation (4000 characters)
+                    def maxSlackMessageLength = 3900
+                    if (last50Logs.length() > maxSlackMessageLength) {
+                        last50Logs = last50Logs.take(maxSlackMessageLength) + "\n... (truncated)"
                     }
+
+                    slackSend channel: "${SLACK_CHANNEL_NAME}",
+                              color: 'danger',
+                              message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}\nLast 50 Lines of Logs:\n${last50Logs}",
+                              tokenCredentialId: 'slack-tocken'
                 } catch (Exception e) {
                     echo "Failed to fetch or process logs: ${e.getMessage()}"
 
