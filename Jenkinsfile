@@ -100,9 +100,13 @@ pipeline {
         failure {
             script {
                 try {
-                    def last50Logs = currentBuild.rawBuild.getLog(50).join('\n')
-                    echo "Last 50 Lines of Logs:\n${last50Logs}"
+                    // Fetch the last 50 lines of the Jenkins build log
+                    def last50Logs = sh(
+                        script: "tail -n 50 ${env.WORKSPACE}/../${env.JOB_NAME}/builds/${env.BUILD_NUMBER}/log",
+                        returnStdout: true
+                    ).trim()
 
+                    // Truncate if Slack message length exceeds the limit
                     def maxSlackMessageLength = 3900
                     if (last50Logs.length() > maxSlackMessageLength) {
                         last50Logs = last50Logs.take(maxSlackMessageLength) + "\n... (truncated)"
@@ -110,7 +114,7 @@ pipeline {
 
                     slackSend channel: "${SLACK_CHANNEL_NAME}",
                               color: 'danger',
-                              message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}\nLast 50 Lines of Logs:\n${last50Logs}",
+                              message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed!\nLast 50 Lines of Logs:\n${last50Logs}",
                               tokenCredentialId: 'slack-tocken'
                 } catch (Exception e) {
                     echo "Failed to fetch or process logs: ${e.getMessage()}"
