@@ -102,12 +102,16 @@ pipeline {
         }
         failure {
             script {
-                // Fetch full build logs for error capture (increased log limit to capture more)
-                def allLogs = currentBuild.rawBuild.getLog(100)  // Increase this number if needed
+                // Fetch full build logs for error capture (increase log size as needed)
+                def allLogs = currentBuild.rawBuild.getLog(100)  // You can increase this number if necessary
 
-                // Check for error logs
+                // Print the first few lines of the logs to help debug
+                echo "First 10 lines of logs: ${allLogs.take(10).join('\n')}"
+
+                // Check for error logs using a case-insensitive regex search for 'error'
                 def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
 
+                // If error logs are found, send them to Slack
                 if (errorLogs) {
                     def errorMessage = errorLogs.join("\n")
                     slackSend channel: "${SLACK_CHANNEL_NAME}",
