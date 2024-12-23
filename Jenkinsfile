@@ -117,14 +117,10 @@ pipeline {
                           message: """❌ Pipeline *${env.JOB_NAME}* #${env.BUILD_NUMBER} failed!
 Check the logs: ${env.JENKINS_URL}console
 *Last 50 Log Lines:*
-\`\`\`
-${logLines}
-\`\`\`""",
+
+${logLines}""",
                           tokenCredentialId: 'slack-tocken'
             }
         }
     }
 }
-
-
-
