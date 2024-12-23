@@ -36,7 +36,7 @@ pipeline {
         stage("Upload App Image") {
             steps {
                 script {
-                    withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    withCredentials([aws(credentialsId: 'aws_secret', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         // Authenticate Docker to AWS ECR
                         sh "aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                         
@@ -52,7 +52,7 @@ pipeline {
 
         stage('Deploy to ECS') {
             steps {
-                withCredentials([aws(credentialsId: 'AWS-CREDENDS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([aws(credentialsId: 'aws_secret', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     script {
                         // Register a new ECS task definition revision with the updated image
                         def taskDefinitionResponse = sh(
@@ -76,7 +76,7 @@ pipeline {
                         // Update ECS service to use the new task definition revision
                         sh """
                         aws ecs update-service \
-                            --cluster ${CLUSTER} 
+                            --cluster ${CLUSTER} \
                             --service ${SERVICE} \
                             --task-definition ${taskDefinitionArn} \
                             --force-new-deployment \
@@ -101,14 +101,15 @@ pipeline {
         }
         failure {
             script {
-                // Fetch the last 50 lines of logs
-                def logLines = currentBuild.rawBuild.getLog(50).join('\n')
+                // Fetch up to 1000 lines from the console log and extract the last 50 lines
+                def fullLog = currentBuild.rawBuild.getLog(1000)
+                def logLines = fullLog.takeRight(50).join('\n')
                 
                 // Send a detailed Slack notification
                 slackSend channel: "${SLACK_CHANNEL_NAME}",
                           color: 'danger',
                           message: """❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed!
-                                      Check logs: ${env.JENKINS_URL}
+                                      Check logs: ${env.JENKINS_URL}console
                                       \n*Last 50 Log Lines:*\n```$logLines```""",
                           tokenCredentialId: 'slack-tocken'
             }
