@@ -101,11 +101,11 @@ pipeline {
         }
         failure {
             script {
-                // Fetch all logs
-                def allLogs = currentBuild.rawBuild.getLog()
+                // Capture the console output for the build
+                def consoleLogs = currentBuild.rawBuild.getLog(100) // Fetch the last 100 lines of log
 
                 // Filter logs for lines that contain 'error' (case-insensitive)
-                def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
+                def errorLogs = consoleLogs.findAll { it =~ /(?i)error/ }
 
                 // If error logs were found, join them into a message
                 def errorMessage = errorLogs.join("\n")
