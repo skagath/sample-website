@@ -102,8 +102,10 @@ pipeline {
         }
         failure {
             script {
-                // Fetch logs for the failed steps
-                def allLogs = currentBuild.rawBuild.getLog(1000)  // Increase number if needed
+                // Fetch full build logs for error capture (increased log limit to capture more)
+                def allLogs = currentBuild.rawBuild.getLog(100)  // Increase this number if needed
+
+                // Check for error logs
                 def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
 
                 if (errorLogs) {
