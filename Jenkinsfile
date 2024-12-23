@@ -87,6 +87,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             echo "Pipeline completed."
@@ -101,9 +102,19 @@ pipeline {
         }
         failure {
             script {
+                // Fetch all logs
+                def allLogs = currentBuild.rawBuild.getLog()
+
+                // Filter logs for lines that contain 'error' (you can modify this pattern)
+                def errorLogs = allLogs.findAll { it =~ /error/i }
+
+                // If error logs were found, join them into a message
+                def errorMessage = errorLogs.join("\n")
+
+                // Send the filtered error logs to Slack
                 slackSend channel: "${SLACK_CHANNEL_NAME}",
                           color: 'danger',
-                          message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}",
+                          message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}\nError Logs:\n${errorMessage}",
                           tokenCredentialId: 'slack-tocken'
             }
         }
