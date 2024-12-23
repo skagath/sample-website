@@ -87,7 +87,6 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             echo "Pipeline completed."
@@ -102,22 +101,16 @@ pipeline {
         }
         failure {
             script {
-                // Fetch logs for the failed steps
-                def allLogs = currentBuild.rawBuild.getLog(1000)  // Increase number if needed
-                def errorLogs = allLogs.findAll { it =~ /(?i)error/ }
-
-                if (errorLogs) {
-                    def errorMessage = errorLogs.join("\n")
-                    slackSend channel: "${SLACK_CHANNEL_NAME}",
-                              color: 'danger',
-                              message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}\nError Logs:\n${errorMessage}",
-                              tokenCredentialId: 'slack-tocken'
-                } else {
-                    slackSend channel: "${SLACK_CHANNEL_NAME}",
-                              color: 'danger',
-                              message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! No error logs found. Check logs: ${env.JENKINS_URL}",
-                              tokenCredentialId: 'slack-tocken'
-                }
+                // Fetch the last 50 lines of logs
+                def logLines = currentBuild.rawBuild.getLog(50).join('\n')
+                
+                // Send a detailed Slack notification
+                slackSend channel: "${SLACK_CHANNEL_NAME}",
+                          color: 'danger',
+                          message: """❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed!
+                                      Check logs: ${env.JENKINS_URL}
+                                      \n*Last 50 Log Lines:*\n```$logLines```""",
+                          tokenCredentialId: 'slack-tocken'
             }
         }
     }
