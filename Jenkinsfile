@@ -9,6 +9,7 @@ pipeline {
         REGION = "us-east-1"
         SERVICE = "svc-sample-app"
         ECS_TASK_DEFINITION = "tf-sampleapp"
+        SLACK_CHANNEL_NAME = "xyz"
     }
 
     stages {
@@ -83,6 +84,27 @@ pipeline {
                         """
                     }
                 }
+            }
+        }
+    }
+    post {
+        always {
+            echo "Pipeline completed."
+        }
+        success {
+            script {
+                slackSend channel: "${SLACK_CHANNEL_NAME}",
+                          color: 'good',
+                          message: "✅ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} succeeded!",
+                          tokenCredentialId: 'slack-tocken'
+            }
+        }
+        failure {
+            script {
+                slackSend channel: "${SLACK_CHANNEL_NAME}",
+                          color: 'danger',
+                          message: "❌ Pipeline ${env.JOB_NAME} #${env.BUILD_NUMBER} failed! Check logs: ${env.JENKINS_URL}",
+                          tokenCredentialId: 'slack-tocken'
             }
         }
     }
