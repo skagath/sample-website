@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         ECR_REPO = "sample-app"
-        ECR_REGISTRY = "438465160558.dkr.ecr.us-east-1.amazonaws.com"
+        ECR_REGISTRY = "992382624660.dkr.ecr.us-east-1.amazonaws.com"
         IMAGE_TAG = "latest"
         CLUSTER = "sampleapp"
         REGION = "us-east-1"
