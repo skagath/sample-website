@@ -103,10 +103,13 @@ pipeline {
         failure {
             script {
                 // Fetch the entire console output
-                def fullConsoleLog = currentBuild.rawBuild.getLog(10000).join('\n') // Fetches logs up to 10,000 lines
+                def fullConsoleLog = currentBuild.rawBuild.getLog(10000).join('\n') // Fetches up to 10,000 lines
+
+                // Ensure logs are within Slack's message size limit (truncate if necessary)
+                def truncatedLogs = fullConsoleLog.take(3900) // Safely truncate logs for Slack (leaving room for other text)
 
                 // Clean up log content to avoid formatting issues in Slack
-                def cleanLogs = fullConsoleLog.replaceAll('```', '')
+                def cleanLogs = truncatedLogs.replaceAll('```', '')
 
                 // Send failure message with logs to Slack
                 slackSend channel: "${SLACK_CHANNEL_NAME}",
@@ -114,7 +117,7 @@ pipeline {
                           message: """❌ Pipeline *${env.JOB_NAME}* #${env.BUILD_NUMBER} failed!
 Check the logs: ${env.JENKINS_URL}console
 
-*Full Logs:*
+*Partial Logs (truncated):*
 ```text
 ${cleanLogs}```""",
                           tokenCredentialId: 'slack-tocken'
