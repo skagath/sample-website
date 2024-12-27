@@ -5,7 +5,7 @@ pipeline {
         ECR_REPO = "sample-app"
         ECR_REGISTRY = "940482429350.dkr.ecr.us-west-2.amazonaws.com"
         IMAGE_TAG = "latest"
-        CLUSTER = "sampleapp11"
+        CLUSTER = "sampleapp1"
         REGION = "us-east-1"
         SERVICE = "svc-sample-app"
         ECS_TASK_DEFINITION = "tf-sampleapp"
