@@ -1,10 +1,11 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:438465160558:task-definition/tf-sampleapp:15",
+    "taskDefinitionArn": "arn:aws:ecs:us-west-2:940482429350:task-definition/tf-sampleapp:2",
     "containerDefinitions": [
         {
             "name": "sample-app",
-            "image": "438465160558.dkr.ecr.us-east-1.amazonaws.com/sample-app:latest",
-            "cpu": 0,
+            "image": "940482429350.dkr.ecr.us-west-2.amazonaws.com/sample-app:latest",
+            "cpu": 1024,
+            "memoryReservation": 1024,
             "portMappings": [
                 {
                     "name": "sample-app-80-tcp",
@@ -27,7 +28,7 @@
                     "mode": "non-blocking",
                     "awslogs-create-group": "true",
                     "max-buffer-size": "25m",
-                    "awslogs-region": "us-east-1",
+                    "awslogs-region": "us-west-2",
                     "awslogs-stream-prefix": "ecs"
                 },
                 "secretOptions": []
@@ -36,8 +37,8 @@
         }
     ],
     "family": "tf-sampleapp",
-    "executionRoleArn": "arn:aws:iam::438465160558:role/ecsTaskExecutionRole",
-    "revision": 15,
+    "executionRoleArn": "arn:aws:iam::940482429350:role/ecsTaskExecutionRole",
+    "revision": 2,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -55,6 +56,9 @@
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -79,8 +83,8 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-12-20T05:53:10.363Z",
-    "registeredBy": "arn:aws:iam::438465160558:root",
+    "registeredAt": "2024-12-27T06:51:02.695Z",
+    "registeredBy": "arn:aws:iam::940482429350:root",
     "enableFaultInjection": false,
     "tags": []
 }
